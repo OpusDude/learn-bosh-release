@@ -1,6 +1,6 @@
 ---
 name: learn-bosh
-director_uuid: 4796378f-cc91-4d93-a1b0-75a9af101708
+director_uuid: 550570c9-9253-4952-9e2d-690659a3deef
 
 releases:
 - name: learn-bosh
@@ -8,40 +8,48 @@ releases:
 
 networks:
 - name: default
+  type: manual
   subnets:
-  - range: 10.244.0.0/28
-    reserved: [10.244.0.1]
-    static: [10.244.0.2,10.244.0.6,10.244.0.10]
+  - range: 10.0.0.0/24
+    gateway: 10.0.0.1
+    dns: [168.63.129.16]
+    reserved: [10.0.0.1-10.0.0.6]
+    static: [10.0.0.7,10.0.0.8,10.0.0.10]
     cloud_properties:
-      name: random
+      virtual_network_name: boshVnet
+      subnet_name: bosh
+      security_group: nsg-bosh
 
 resource_pools:
 - name: default
-  stemcell:
-    name: bosh-warden-boshlite-ubuntu-trusty-go_agent
-    version: latest
   network: default
-  cloud_properties: {}
+  stemcell:
+    name: bosh-azure-hyperv-ubuntu-trusty-go_agent
+    version: 3363.15 
+  cloud_properties:
+    instance_type: Standard_D1
+    root_disk:
+      size: 30_000
 
 compilation:
   workers: 2
+  reuse_compilation_vms: true
   network: default
-  cloud_properties: {}
+  resource_pool: default
 
 update:
   canaries: 1
   canary_watch_time: 60000
   update_watch_time: 60000
-  max_in_flight: 2
+  max_in_flight: 4
 
 jobs:
 - name: app
+  release: learn-bosh
   templates:
   - name: app
   instances: 1
   resource_pool: default
   networks:
   - name: default
-    static_ips:
-    - 10.244.0.2
-  properties: {}
+    static_ips: 10.0.0.10
