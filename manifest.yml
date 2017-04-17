@@ -13,8 +13,8 @@ networks:
   - range: 10.0.0.0/24
     gateway: 10.0.0.1
     dns: [168.63.129.16]
-    reserved: [10.0.0.1-10.0.0.6]
-    static: [10.0.0.7,10.0.0.8,10.0.0.10]
+    reserved: [10.0.0.1-10.0.0.10]
+    static: [10.0.0.11,10.0.0.12,10.0.0.13]
     cloud_properties:
       virtual_network_name: boshVnet
       subnet_name: bosh
@@ -27,6 +27,7 @@ resource_pools:
     name: bosh-azure-hyperv-ubuntu-trusty-go_agent
     version: 3363.15 
   cloud_properties:
+
     instance_type: Standard_D1
     root_disk:
       size: 30_000
@@ -35,7 +36,9 @@ compilation:
   workers: 2
   reuse_compilation_vms: true
   network: default
-  resource_pool: default
+  #resource_pool: default
+  cloud_properties:
+    instance_type: Standard_F4
 
 update:
   canaries: 1
@@ -48,8 +51,24 @@ jobs:
   release: learn-bosh
   templates:
   - name: app
+  instances: 2
+  resource_pool: default
+  networks:
+  - name: default
+    static_ips: 
+    - 10.0.0.13
+    - 10.0.0.12
+  properties:
+    port: 8888
+- name: router
+  templates:
+  - name: router
   instances: 1
   resource_pool: default
   networks:
   - name: default
-    static_ips: 10.0.0.10
+    static_ips: [10.0.0.11]
+  properties:
+    servers: 
+    - http://10.0.0.12:8888
+    - http://10.0.0.13:8888
